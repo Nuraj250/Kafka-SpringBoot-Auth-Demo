@@ -84,3 +84,4 @@ jobs:
           echo "Deploying Docker container..."
           ssh -o StrictHostKeyChecking=no user@your-server-ip "docker pull your-dockerhub-username/kafka-springboot-app:latest && docker run -d -p 8080:8080 your-dockerhub-username/kafka-springboot-app:latest"
 
+
