@@ -1,186 +1,205 @@
-# Kafka Spring Boot Demo
+# Kafka Spring Boot CI/CD Demo
 
-This project demonstrates how to integrate **Apache Kafka** with a **Spring Boot** application. The application will produce and consume messages to/from Kafka using the Spring Kafka library.
+This project demonstrates how to integrate **Kafka** with a **Spring Boot** application, leveraging Docker for containerization, and CI/CD for automation using GitHub Actions. The setup is simple and designed for an intermediate level of experience with Kafka and Docker.
 
 ## Table of Contents
-1. [Technologies Used](#technologies-used)
-2. [Project Structure](#project-structure)
-3. [Running the Application](#running-the-application)
-    - [Locally](#running-locally)
-    - [Using Docker](#running-using-docker)
-4. [Docker Setup](#docker-setup)
-5. [Kafka Setup](#kafka-setup)
-6. [Testing the Application](#testing-the-application)
+- [Project Setup](#project-setup)
+- [Running Locally](#running-locally)
+- [Running with Docker](#running-with-docker)
+- [CI/CD Pipeline](#cicd-pipeline)
+  - [CI/CD GitHub Actions](#cicd-github-actions)
+  - [Required Secrets](#required-secrets)
 
-## Technologies Used
-- **Spring Boot**: For the backend service.
-- **Kafka**: Messaging system for producing and consuming messages.
-- **Docker**: For containerizing the application.
-- **Maven**: Build tool for managing dependencies.
+## Project Setup
 
-## Project Structure
-```
-.
-├── config
-│   └── KafkaConfig.java           # Kafka configuration
-├── controller
-│   └── LogController.java         # Controller for handling requests
-├── model
-│   └── Log.java                   # Log model
-├── service
-│   └── KafkaService.java          # Service to interact with Kafka
-├── src
-├── target
-│   └── ...                        # Build output
-├── Dockerfile                     # Docker configuration
-├── docker-compose.yml             # Docker Compose configuration
-├── pom.xml                        # Maven build file
-└── README.md                      # Project README
+### Prerequisites
+Before getting started, make sure you have the following tools installed:
+
+- **Docker**: [Install Docker](https://www.docker.com/get-started)
+- **Kafka**: [Install Kafka](https://kafka.apache.org/quickstart) or use Docker to run Kafka (recommended)
+- **Java JDK 17**: [Download JDK 17](https://adoptopenjdk.net/)
+- **Maven**: [Download Maven](https://maven.apache.org/download.cgi)
+
+### Cloning the Repository
+
+Clone the repository to your local machine:
+
+```bash
+git clone https://github.com/Nuraj250/Kafka-SpringBoot-CI-CD-Auth-Demo.git
+cd Kafka-SpringBoot-CI-CD-Auth-Demo
 ```
 
-## Running the Application
+## Running Locally
 
-### Running Locally
+### 1. Running Kafka Locally
 
-1. **Start Kafka**: If you have Kafka installed locally, you can run it on `localhost:9092`. Otherwise, use Docker as shown below.
-   
-   **Start Zookeeper** (required for Kafka):
-   ```bash
-   bin/zookeeper-server-start.sh config/zookeeper.properties
-   ```
+Kafka requires a running instance of ZooKeeper and Kafka itself. You can run Kafka locally using Docker, or you can follow the manual installation steps if preferred. Here's how to do it with Docker:
 
-   **Start Kafka**:
-   ```bash
-   bin/kafka-server-start.sh config/server.properties
-   ```
+#### Run Kafka using Docker Compose
 
-2. **Clone the repository** and navigate into the project directory:
-   ```bash
-   git clone https://github.com/YourUsername/Kafka-SpringBoot-CI-CD-Auth-Demo.git
-   cd Kafka-SpringBoot-CI-CD-Auth-Demo
-   ```
+1. Make sure you have `docker-compose.yml` file in your project.
+2. Run the following command to start Kafka and ZooKeeper:
 
-3. **Build the project** using Maven:
-   ```bash
-   ./mvnw clean install
-   ```
-
-4. **Run the Spring Boot application**:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-   The application will start consuming messages from Kafka. You can send messages to the `logs-topic` to see the application in action.
-
-### Running Using Docker
-
-To run the application and Kafka in Docker, we have provided a `docker-compose.yml` file.
-
-1. **Ensure Docker is installed** on your machine. If not, you can follow the [Docker installation guide](https://docs.docker.com/get-docker/).
-
-2. **Build and run the application with Docker Compose**:
-   ```bash
-   docker-compose up --build
-   ```
-
-   This will build the Spring Boot application and set up a Kafka container using Docker. It will run both Kafka and Zookeeper as well.
-
-3. **Accessing the Application**:
-   - The Spring Boot application will be available at `http://localhost:8080` (or the port defined in your `application.properties`).
-
-   - The Kafka broker will be available at `localhost:9092`.
-
-4. **To stop the containers**:
-   ```bash
-   docker-compose down
-   ```
-
-### Docker Setup
-
-Ensure you have the following files in the root of your project:
-
-#### `Dockerfile`
-```dockerfile
-# Use OpenJDK as base image
-FROM openjdk:17-jdk-slim
-
-# Set the working directory
-WORKDIR /app
-
-# Copy the jar file into the container
-COPY target/Kafka-SpringBoot-CI-CD-Auth-Demo.jar app.jar
-
-# Expose the port the app will run on
-EXPOSE 8080
-
-# Run the Spring Boot application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+```bash
+docker-compose up -d
 ```
 
-#### `docker-compose.yml`
+This will spin up Kafka on `localhost:9092` and ZooKeeper on `localhost:2181`.
+
+### 2. Running the Spring Boot Application
+
+Once Kafka is running, you can start the Spring Boot application by running:
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+The application should be available at `http://localhost:8080`.
+
+## Running with Docker
+
+To run the Kafka Spring Boot application using Docker:
+
+1. **Build the Docker image**:
+
+   Make sure Docker is running and execute the following command in the project root directory:
+
+   ```bash
+   docker build -t kafka-springboot-app .
+   ```
+
+2. **Run the Docker container**:
+
+   After the image is built, you can run it using:
+
+   ```bash
+   docker run -d -p 8080:8080 kafka-springboot-app
+   ```
+
+   This will start the application inside a container, and you can access it at `http://localhost:8080`.
+
+## CI/CD Pipeline
+
+### CI/CD GitHub Actions
+
+This project includes a **CI/CD pipeline** defined using **GitHub Actions**. The pipeline is designed to automatically build, test, and deploy the application on every push to the `main` branch.
+
+The CI/CD pipeline is defined in `.github/workflows/ci-cd.yml`.
+
+#### Key Steps:
+1. **Build the Application**: The pipeline compiles the Spring Boot application and runs tests.
+2. **Build Docker Image**: The pipeline builds a Docker image for the application and pushes it to Docker Hub.
+3. **Deploy to Server**: The pipeline deploys the latest Docker image to a remote server (optional).
+
+### Required Secrets
+
+For the CI/CD pipeline to work, you'll need to configure GitHub secrets for Docker Hub login and SSH access.
+
+1. **DOCKER_USERNAME**: Your Docker Hub username.
+2. **DOCKER_PASSWORD**: Your Docker Hub password (or Docker Hub access token).
+3. **SSH_PRIVATE_KEY**: Your private SSH key for accessing the server where you want to deploy the Docker container.
+
+To configure these secrets:
+1. Go to your GitHub repository.
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**.
+3. Add the secrets mentioned above.
+
+### Example GitHub Actions Workflow (`ci-cd.yml`)
+
+The CI/CD process is as follows:
+
 ```yaml
-version: '3.8'
+name: CI/CD Pipeline
 
-services:
-  kafka:
-    image: wurstmeister/kafka:latest
-    environment:
-      KAFKA_ADVERTISED_LISTENER: INSIDE://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
-      KAFKA_LISTENER_NAME_INSIDE: INSIDE
-      KAFKA_LISTENER_PORT: 9092
-      KAFKA_LISTENER_INTERNAL: INSIDE
-      KAFKA_LISTENER_EXTERNAL: INSIDE
-      KAFKA_LISTENER_NAME_EXTERNAL: INSIDE
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-  zookeeper:
-    image: wurstmeister/zookeeper:latest
-    ports:
-      - "2181:2181"
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - kafka
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adoptopenjdk'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
+
+      - name: Run tests
+        run: mvn test
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t your-dockerhub-username/kafka-springboot-app .
+          docker tag your-dockerhub-username/kafka-springboot-app:latest your-dockerhub-username/kafka-springboot-app:${{ github.sha }}
+
+      - name: Push Docker image
+        run: |
+          docker push your-dockerhub-username/kafka-springboot-app:latest
+          docker push your-dockerhub-username/kafka-springboot-app:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to server
+        run: |
+          echo "Deploying Docker container..."
+          ssh -o StrictHostKeyChecking=no user@your-server-ip "docker pull your-dockerhub-username/kafka-springboot-app:latest && docker run -d -p 8080:8080 your-dockerhub-username/kafka-springboot-app:latest"
 ```
 
-This `docker-compose.yml` file sets up the following:
-- **Kafka**: Uses the `wurstmeister/kafka` image to run Kafka.
-- **Zookeeper**: Uses the `wurstmeister/zookeeper` image to run Zookeeper (Kafka requires Zookeeper).
-- **Spring Boot Application**: Builds the Spring Boot application from the `Dockerfile` and links it to the Kafka container.
+### How to Trigger the Pipeline
 
-## Kafka Setup
+- The pipeline will run automatically whenever there is a push or pull request made to the `main` branch.
+- It will:
+   - Build the app,
+   - Run tests,
+   - Build and push the Docker image,
+   - Optionally deploy to a remote server.
 
-1. Kafka will run on port `9092` and can be accessed by the Spring Boot application or any Kafka client on `localhost:9092`.
-2. The Spring Boot application will use Kafka to send and receive messages from the `logs-topic`.
+---
 
-## Testing the Application
+## Conclusion
 
-To test the application, you can use Kafka's **console producer** and **consumer**.
+This project provides a simple Kafka-based Spring Boot application with a CI/CD pipeline using GitHub Actions. It automates the entire process, from building the application to deploying it using Docker.
 
-### Send Messages to Kafka (Producer)
-
-Run the following command to send messages to the Kafka topic (`logs-topic`):
-
-```bash
-bin/kafka-console-producer.sh --broker-list localhost:9092 --topic logs-topic
-```
-
-Type your messages and hit Enter to send them to Kafka.
-
-### Consume Messages from Kafka (Consumer)
-
-To consume messages from the Kafka topic, run:
-
-```bash
-bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic logs-topic --from-beginning
-```
-
-Your Spring Boot application will consume messages from `logs-topic` and process them.
+Let me know if you need any additional changes or explanations on specific parts!
